@@ -1,7 +1,16 @@
 import "./App.css";
 
+import { Container } from "@mui/system";
+import ChatBox from "./components/ChatBox";
+
 function App() {
-  return <>hello</>;
+  return (
+    <>
+      <Container>
+        <ChatBox />
+      </Container>
+    </>
+  );
 }
 
 export default App;
