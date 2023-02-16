@@ -8,11 +8,13 @@ import Home from "./pages/Home";
 import Room from "./pages/Room";
 import { createContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import Cookies from "js-cookies";
 
 export const socketContext = createContext();
 
 function App() {
   const [socket, setSocket] = useState(null);
+
   useEffect(() => {
     setSocket(io("http://localhost:5000"));
   }, []);

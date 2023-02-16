@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useRef } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
@@ -13,6 +13,8 @@ const ChatBox = () => {
   const [typing, setTyping] = useState(false);
   const [typingTimeOut, setTypingTimeOut] = useState(null);
   const socket = useContext(socketContext);
+  const fileref = useRef();
+
   const { id } = useParams();
   useEffect(() => {
     if (!socket) return;
@@ -28,7 +30,34 @@ const ChatBox = () => {
     socket.on("typing-ended-server", () => {
       setTyping(false);
     });
+    socket.on("uploaded", (data) => {
+      console.log("data", data);
+      setChat([
+        ...chat,
+        { message: data.buffer, received: true, type: "image" },
+      ]);
+    });
   }, [chat, socket]);
+
+  function SelectFile() {
+    fileref.current.click();
+  }
+
+  function UploadFile(e) {
+    let file = e.target.files[0];
+    if (!file) return;
+    let reader = new FileReader();
+
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const data = reader.result;
+      socket.emit("file-upload", data, { roomId: id });
+      setChat([
+        ...chat,
+        { message: reader.result, received: false, type: "image" },
+      ]);
+    };
+  }
 
   function handleForm(e) {
     e.preventDefault();
@@ -53,7 +82,14 @@ const ChatBox = () => {
       <Card sx={{ padding: "12px" }}>
         <Box sx={{ marginBottom: "10px", display: "block" }}>
           {chat?.map((data, index) => {
-            return (
+            return data?.type === "image" ? (
+              <img
+                src={data?.message}
+                alt="imagedata"
+                width="200"
+                style={{ marginLeft: data.received ? "0" : "500px" }}
+              />
+            ) : (
               <Typography
                 sx={{ textAlign: data.received ? "left" : "right" }}
                 key={index}
@@ -71,6 +107,15 @@ const ChatBox = () => {
             value={message || ""}
             onChange={HandleInput}
           />
+          <input
+            onChange={UploadFile}
+            ref={fileref}
+            type="file"
+            style={{ display: "none" }}
+          />
+          <Button variant="contained" onClick={SelectFile}>
+            Upload File
+          </Button>
           <Button variant="contained" type="submit">
             Send
           </Button>
