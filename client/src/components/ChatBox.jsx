@@ -1,21 +1,19 @@
-import React from "react";
+import React, { useContext } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 import { Card, Typography } from "@mui/material";
+import { socketContext } from "../App";
+import { useParams } from "react-router-dom";
 
 const ChatBox = () => {
-  const [socket, setSocket] = useState(null);
   const [message, setMessage] = useState();
   const [chat, setChat] = useState([]);
   const [typing, setTyping] = useState(false);
   const [typingTimeOut, setTypingTimeOut] = useState(null);
-
-  useEffect(() => {
-    setSocket(io("http://localhost:5000"));
-  }, []);
+  const socket = useContext(socketContext);
+  const { id } = useParams();
   useEffect(() => {
     if (!socket) return;
 
@@ -34,23 +32,23 @@ const ChatBox = () => {
 
   function handleForm(e) {
     e.preventDefault();
-    socket.emit("message", message);
+    socket.emit("message", message, id);
     setChat([...chat, { message, received: false }]);
     setMessage("");
   }
 
   function HandleInput(e) {
     setMessage(e.target.value);
-    socket.emit("typing-started");
+    socket.emit("typing-started", { id });
     if (typingTimeOut) clearTimeout(typingTimeOut);
     setTypingTimeOut(
       setTimeout(() => {
-        socket.emit("typing-ended");
+        socket.emit("typing-ended", { id });
       }, 1000)
     );
   }
   return (
-    <>
+    <div style={{ marginTop: "50px" }}>
       {typing ? <h3>Typing...</h3> : undefined}
       <Card sx={{ padding: "12px" }}>
         <Box sx={{ marginBottom: "10px", display: "block" }}>
@@ -78,7 +76,7 @@ const ChatBox = () => {
           </Button>
         </Box>
       </Card>
-    </>
+    </div>
   );
 };
 
